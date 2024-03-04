@@ -2,7 +2,6 @@ use bitflags::bitflags;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
 use super::list::{
@@ -117,10 +116,9 @@ impl<'a> ParserImpl<'a> {
             return self.parse_ts_function_type();
         }
 
-        let left_span = self.start_span();
         let left = self.parse_ts_union_type()?;
 
-        self.parse_ts_conditional_type(left_span, left)
+        self.parse_ts_conditional_type(left)
     }
 
     pub(crate) fn parse_ts_type_parameters(
@@ -211,11 +209,8 @@ impl<'a> ParserImpl<'a> {
         Ok(Some(self.parse_ts_type()?))
     }
 
-    fn parse_ts_conditional_type(
-        &mut self,
-        left_span: Span,
-        left: TSType<'a>,
-    ) -> Result<TSType<'a>> {
+    fn parse_ts_conditional_type(&mut self, left: TSType<'a>) -> Result<TSType<'a>> {
+        let span = self.start_span();
         if !self.ctx.has_disallow_conditional_types()
             && !self.cur_token().is_on_new_line
             && self.eat(Kind::Extends)
@@ -234,7 +229,7 @@ impl<'a> ParserImpl<'a> {
                 self.without_context(Context::DisallowConditionalTypes, Self::parse_ts_type)?;
 
             return Ok(self.ast.ts_conditional_type(
-                self.end_span(left_span),
+                self.end_span(span),
                 left,
                 extends_type,
                 true_type,
