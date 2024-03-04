@@ -17,9 +17,12 @@ impl<'a> Lexer<'a> {
         byte_search! {
             lexer: self,
             table: NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE,
-            handle_eof: 0, // Fall through to below
+            handle_match: |_next_byte| {
+                Kind::Skip
+            },
+            handle_eof: || {
+                Kind::Skip
+            },
         };
-
-        Kind::Skip
     }
 }
