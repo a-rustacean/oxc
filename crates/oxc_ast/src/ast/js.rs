@@ -1799,7 +1799,6 @@ pub struct FormalParameter<'a> {
     pub pattern: BindingPattern<'a>,
     pub accessibility: Option<TSAccessibility>,
     pub readonly: bool,
-    pub r#override: bool,
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 

@@ -796,10 +796,9 @@ impl<'a> AstBuilder<'a> {
         pattern: BindingPattern<'a>,
         accessibility: Option<TSAccessibility>,
         readonly: bool,
-        r#override: bool,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> FormalParameter<'a> {
-        FormalParameter { span, pattern, accessibility, readonly, r#override, decorators }
+        FormalParameter { span, pattern, accessibility, readonly, decorators }
     }
 
     pub fn ts_this_parameter(

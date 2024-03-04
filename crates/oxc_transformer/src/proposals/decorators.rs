@@ -96,7 +96,6 @@ enum Version {
     #[default]
     Year202305,
 }
-
 impl Version {
     fn is_legacy(self) -> bool {
         matches!(self, Self::Legacy)
@@ -480,7 +479,6 @@ impl<'a> Decorators<'a> {
                                                     ),
                                                     None,
                                                     false,
-                                                    false,
                                                     self.ast.new_vec(),
                                                 )),
                                                 None,
@@ -556,7 +554,6 @@ impl<'a> Decorators<'a> {
                                                 false,
                                             ),
                                             None,
-                                            false,
                                             false,
                                             self.ast.new_vec(),
                                         ))
@@ -912,7 +909,6 @@ impl<'a> Decorators<'a> {
                         ),
                         None,
                         false,
-                        false,
                         self.ast.new_vec(),
                     ));
                     let private_field = self.ast.private_field(
@@ -962,7 +958,6 @@ impl<'a> Decorators<'a> {
                                 false,
                             ),
                             None,
-                            false,
                             false,
                             self.ast.new_vec(),
                         ));
