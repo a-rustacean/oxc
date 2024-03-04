@@ -4,7 +4,6 @@ mod minifier;
 mod misc;
 mod prettier;
 mod runtime;
-mod sourcemap;
 mod suite;
 mod test262;
 mod typescript;
@@ -14,7 +13,6 @@ use std::{fs, path::PathBuf, process::Command, time::Duration};
 use oxc_tasks_common::agent;
 use runtime::{CodegenRuntimeTest262Case, V8_TEST_262_FAILED_TESTS_PATH};
 use similar::DiffableStr;
-use sourcemap::{SourcemapCase, SourcemapSuite};
 
 use crate::{
     babel::{BabelCase, BabelSuite},
@@ -66,7 +64,6 @@ impl AppArgs {
         BabelSuite::<CodegenBabelCase>::new().run("codegen_babel", self);
         TypeScriptSuite::<CodegenTypeScriptCase>::new().run("codegen_typescript", self);
         MiscSuite::<CodegenMiscCase>::new().run("codegen_misc", self);
-        SourcemapSuite::<SourcemapCase>::new().run("codegen_sourcemap", self);
     }
 
     pub fn run_prettier(&self) {
