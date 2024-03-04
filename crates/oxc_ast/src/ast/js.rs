@@ -1770,8 +1770,6 @@ pub enum FunctionType {
     FunctionDeclaration,
     FunctionExpression,
     TSDeclareFunction,
-    /// <https://github.com/typescript-eslint/typescript-eslint/pull/1289>
-    TSEmptyBodyFunctionExpression,
 }
 
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
