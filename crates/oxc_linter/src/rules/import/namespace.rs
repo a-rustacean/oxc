@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{ast::JSXElementName, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -95,10 +95,8 @@ impl Rule for Namespace {
                             }
                         }
 
-                        AstKind::JSXMemberExpressionObject(_) => {
-                            if let Some(AstKind::JSXMemberExpression(expr)) =
-                                ctx.nodes().parent_kind(node.id())
-                            {
+                        AstKind::JSXOpeningElement(element) => {
+                            if let JSXElementName::MemberExpression(expr) = &element.name {
                                 check_binding_exported(&expr.property.name, expr.property.span);
                             }
                         }
