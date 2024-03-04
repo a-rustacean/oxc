@@ -73,10 +73,10 @@ impl<'a> Lexer<'a> {
                     }
                 }
             },
-            handle_match: |_next_byte| {
+            handle_match: |_next_byte, _start| {
                 ret
             },
-            handle_eof: || {
+            handle_eof: |_start| {
                 self.error(diagnostics::UnterminatedString(self.unterminated_range()));
                 Kind::Undetermined
             },
@@ -295,14 +295,14 @@ impl<'a> Lexer<'a> {
                     }
                 }
             },
-            handle_match: |_next_byte| {
+            handle_match: |_next_byte, _start| {
                 self.save_template_string(
                     is_valid_escape_sequence,
                     str.into_bump_str(),
                 );
                 ret
             },
-            handle_eof: || {
+            handle_eof: |_start| {
                 self.error(diagnostics::UnterminatedString(self.unterminated_range()));
                 Kind::Undetermined
             },

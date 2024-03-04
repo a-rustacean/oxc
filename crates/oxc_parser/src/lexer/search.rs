@@ -265,16 +265,18 @@ pub(crate) use safe_byte_match_table;
 ///     byte_search! {
 ///       lexer: self,
 ///       table: NOT_STUFF_TABLE,
-///       handle_match: |matched_byte| {
+///       handle_match: |matched_byte, start| {
 ///         // Matching byte has been found.
 ///         // `matched_byte` is `u8` value of first byte which matched the table.
+///         // `start` is `SourcePosition` where search began.
 ///         // `lexer.source` is now positioned on first matching byte.
 ///         // Handle the next matching byte (deal with any special cases).
 ///         // Value this block evaluates to will be returned from enclosing function.
 ///         matched_byte == b'X'
 ///       },
-///       handle_eof: || {
+///       handle_eof: |start| {
 ///         // No bytes from start position to end of source matched the table.
+///         // `start` is `SourcePosition` where search began.
 ///         // `lexer.source` is now positioned at EOF.
 ///         // Handle EOF in some way.
 ///         // Value this block evaluates to will be returned from enclosing function.
@@ -385,17 +387,17 @@ macro_rules! byte_search {
     (
         lexer: $lexer:ident,
         table: $table:ident,
-        handle_match: |$match_byte:ident| $match_handler:expr,
-        handle_eof: || $eof_handler:expr,
+        handle_match: |$match_byte:ident, $match_start:ident| $match_handler:expr,
+        handle_eof: |$eof_start:ident| $eof_handler:expr,
     ) => {{
         let start = $lexer.source.position();
         byte_search! {
             lexer: $lexer,
             table: $table,
             start: start,
-            continue_if: |byte, pos| false,
-            handle_match: |$match_byte| $match_handler,
-            handle_eof: || $eof_handler,
+            continue_if: |__byte, pos| false,
+            handle_match: |$match_byte, $match_start| $match_handler,
+            handle_eof: |$eof_start| $eof_handler,
         }
     }};
 
@@ -405,8 +407,8 @@ macro_rules! byte_search {
         lexer: $lexer:ident,
         table: $table:ident,
         continue_if: |$continue_byte:ident, $pos:ident| $should_continue:expr,
-        handle_match: |$match_byte:ident| $match_handler:expr,
-        handle_eof: || $eof_handler:expr,
+        handle_match: |$match_byte:ident, $match_start:ident| $match_handler:expr,
+        handle_eof: |$eof_start:ident| $eof_handler:expr,
     ) => {{
         let start = $lexer.source.position();
         byte_search! {
@@ -414,8 +416,8 @@ macro_rules! byte_search {
             table: $table,
             start: start,
             continue_if: |$continue_byte, $pos| $should_continue,
-            handle_match: |$match_byte| $match_handler,
-            handle_eof: || $eof_handler,
+            handle_match: |$match_byte, $match_start| $match_handler,
+            handle_eof: |$eof_start| $eof_handler,
         }
     }};
 
@@ -431,13 +433,13 @@ macro_rules! byte_search {
             lexer: $lexer,
             table: $table,
             start: $start,
-            continue_if: |byte, pos| false,
-            handle_match: |$match_byte| $match_handler,
-            handle_eof: || $eof_handler,
+            continue_if: |__byte, pos| false,
+            handle_match: |$match_byte, __start| $match_handler,
+            handle_eof: |__start| $eof_handler,
         }
     };
 
-    // Actual implementation
+    // Provide your own `start` position, and `continue_if`
     (
         lexer: $lexer:ident,
         table: $table:ident,
@@ -445,6 +447,25 @@ macro_rules! byte_search {
         continue_if: |$continue_byte:ident, $pos:ident| $should_continue:expr,
         handle_match: |$match_byte:ident| $match_handler:expr,
         handle_eof: || $eof_handler:expr,
+    ) => {{
+        byte_search! {
+            lexer: $lexer,
+            table: $table,
+            start: $start,
+            continue_if: |$continue_byte, $pos| $should_continue,
+            handle_match: |$match_byte, __start| $match_handler,
+            handle_eof: |__start| $eof_handler,
+        }
+    }};
+
+    // Actual implementation
+    (
+        lexer: $lexer:ident,
+        table: $table:ident,
+        start: $start:ident,
+        continue_if: |$continue_byte:ident, $pos:ident| $should_continue:expr,
+        handle_match: |$match_byte:ident, $match_start:ident| $match_handler:expr,
+        handle_eof: |$eof_start:ident| $eof_handler:expr,
     ) => {{
         // SAFETY:
         // If `$table` is a `SafeByteMatchTable`, it's guaranteed that `lexer.source`
@@ -510,6 +531,7 @@ macro_rules! byte_search {
                     // Advance `lexer.source`'s position to end of file.
                     $lexer.source.set_position($pos);
 
+                    let $eof_start = $start;
                     return $eof_handler;
                 }
             };
@@ -531,6 +553,7 @@ macro_rules! byte_search {
         // SAFETY: See above about UTF-8 character boundaries invariant.
         $lexer.source.set_position($pos);
 
+        let $match_start = $start;
         return $match_handler;
     }};
 }
