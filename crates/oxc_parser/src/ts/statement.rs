@@ -34,7 +34,6 @@ impl<'a> ParserImpl<'a> {
 
         let id = self.parse_binding_identifier()?;
         let members = TSEnumMemberList::parse(self)?.members;
-        let span = self.end_span(span);
         Ok(self.ast.ts_enum_declaration(span, id, members, modifiers))
     }
 
