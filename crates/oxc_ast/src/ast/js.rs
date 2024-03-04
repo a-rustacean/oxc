@@ -2407,11 +2407,19 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     #[inline]
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
-            ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.is_typescript_syntax(),
-            ExportDefaultDeclarationKind::ClassDeclaration(class) => class.is_typescript_syntax(),
+            ExportDefaultDeclarationKind::FunctionDeclaration(func)
+                if func.is_typescript_syntax() =>
+            {
+                true
+            }
+            ExportDefaultDeclarationKind::ClassDeclaration(class)
+                if class.is_typescript_syntax() =>
+            {
+                true
+            }
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
             | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => true,
-            ExportDefaultDeclarationKind::Expression(_) => false,
+            _ => false,
         }
     }
 }
