@@ -397,8 +397,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Import => self.parse_ts_import_type(),
             Kind::Minus if self.peek_kind().is_number() => self.parse_ts_literal_type(),
             Kind::Question => self.parse_js_doc_unknown_or_nullable_type(),
-            // null should not be parsed as a literal type
-            kind if kind.is_literal() && kind != Kind::Null => self.parse_ts_literal_type(),
+            kind if kind.is_literal() => self.parse_ts_literal_type(),
             _ => {
                 if !self.peek_at(Kind::Dot) {
                     let keyword = self.parse_ts_keyword_type();
