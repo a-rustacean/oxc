@@ -18,9 +18,13 @@ enum NoSideEffectsDiagnostic {
     #[diagnostic(severity(warning))]
     Assignment(CompactStr, #[label] Span),
 
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating")]
+    #[diagnostic(severity(warning))]
+    Mutation(#[label] Span),
+
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating `{0}`")]
     #[diagnostic(severity(warning))]
-    Mutation(CompactStr, #[label] Span),
+    MutationWithName(CompactStr, #[label] Span),
 
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function return value")]
     #[diagnostic(severity(warning))]
@@ -118,8 +122,8 @@ fn test() {
         // // BreakStatement
         // "while(true){break}",
         // // CallExpression
-        // "(a=>{const y = a})(ext, ext)",
-        // "const x = ()=>{}, y = ()=>{}; x(y())",
+        "(a=>{const y = a})(ext, ext)",
+        "const x = ()=>{}, y = ()=>{}; x(y())",
         // // CatchClause
         // "try {} catch (error) {}",
         // "const x = ()=>{}; try {} catch (error) {const x = ext}; x()",
@@ -384,12 +388,12 @@ fn test() {
         // "var x=()=>{};{var x=ext}x()",
         // "var x=ext;{x(); var x=()=>{}}",
         // // CallExpression
-        // "(()=>{})(ext(), 1)",
-        // "(()=>{})(1, ext())",
+        "(()=>{})(ext(), 1)",
+        "(()=>{})(1, ext())",
         // // CallExpression when called
-        // "const x = ()=>ext; const y = x(); y()",
+        "const x = ()=>ext; const y = x(); y()",
         // // CallExpression when mutated
-        // "const x = ()=>ext; const y = x(); y.z = 1",
+        "const x = ()=>ext; const y = x(); y.z = 1",
         // // CatchClause
         // "try {} catch (error) {ext()}",
         // "var x=()=>{}; try {} catch (error) {var x=ext}; x()",

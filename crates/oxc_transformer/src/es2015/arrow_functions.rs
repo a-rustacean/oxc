@@ -1,12 +1,12 @@
 use std::rc::Rc;
 
 use oxc_allocator::Vec;
+use oxc_ast::visit::walk_mut::walk_jsx_identifier_mut;
 use oxc_ast::{ast::*, AstBuilder, AstType, VisitMut};
 use oxc_span::{Atom, SPAN};
 use serde::Deserialize;
 
 use crate::context::TransformerCtx;
-use crate::options::TransformOptions;
 use crate::TransformTarget;
 
 /// ES2015 Arrow Functions
@@ -54,19 +54,18 @@ impl<'a> VisitMut<'a> for ArrowFunctions<'a> {
             }
             *ident = self.ast.jsx_identifier(SPAN, self.get_this_name());
         }
+
+        walk_jsx_identifier_mut(self, ident);
     }
 }
 
 impl<'a> ArrowFunctions<'a> {
-    pub fn new(
-        ast: Rc<AstBuilder<'a>>,
-        _: TransformerCtx<'a>,
-        options: &TransformOptions,
-    ) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.arrow_functions.is_some()).then(|| {
-            let nodes = ast.new_vec();
-            Self { ast, uid: 0, nodes, has_this: false, insert: false }
-        })
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        (ctx.options.target < TransformTarget::ES2015 || ctx.options.arrow_functions.is_some())
+            .then(|| {
+                let nodes = ctx.ast.new_vec();
+                Self { ast: ctx.ast, uid: 0, nodes, has_this: false, insert: false }
+            })
     }
 
     fn get_this_name(&self) -> Atom<'a> {
