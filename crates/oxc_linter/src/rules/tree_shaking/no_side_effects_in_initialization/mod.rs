@@ -20,15 +20,23 @@ enum NoSideEffectsDiagnostic {
 
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating")]
     #[diagnostic(severity(warning))]
-    Mutation(#[label] Span),
+    Mutate(#[label] Span),
 
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating `{0}`")]
     #[diagnostic(severity(warning))]
-    MutationWithName(CompactStr, #[label] Span),
+    MutateWithName(CompactStr, #[label] Span),
 
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function return value")]
     #[diagnostic(severity(warning))]
-    MutationOfFunctionReturnValue(#[label] Span),
+    MutateFunctionReturnValue(#[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function parameter")]
+    #[diagnostic(severity(warning))]
+    MutateParameter(#[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating unknown this value")]
+    #[diagnostic(severity(warning))]
+    MutateOfThis(#[label] Span),
 
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling")]
     #[diagnostic(severity(warning))]
@@ -41,6 +49,10 @@ enum NoSideEffectsDiagnostic {
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `{0}`")]
     #[diagnostic(severity(warning))]
     CallGlobal(CompactStr, #[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function parameter")]
+    #[diagnostic(severity(warning))]
+    CallParameter(#[label] Span),
 }
 
 /// <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/master/src/rules/no-side-effects-in-initialization.ts>
@@ -84,21 +96,21 @@ fn test() {
     let pass = vec![
         // ArrayExpression
         "[]",
-        // "const x = []",
-        // "const x = [ext,ext]",
-        // "const x = [1,,2,]",
+        "const x = []",
+        "const x = [ext,ext]",
+        "const x = [1,,2,]",
         // // ArrayPattern
-        // "const [x] = []",
-        // "const [,x,] = []",
+        "const [x] = []",
+        "const [,x,] = []",
         // // ArrowFunctionExpression
-        // "const x = a=>{a(); ext()}",
+        "const x = a=>{a(); ext()}",
         // // ArrowFunctionExpression when called
-        // "(()=>{})()",
-        // "(a=>{})()",
-        // "((...a)=>{})()",
-        // "(({a})=>{})()",
+        "(()=>{})()",
+        "(a=>{})()",
+        "((...a)=>{})()",
+        "(({a})=>{})()",
         // // ArrowFunctionExpression when mutated
-        // "const x = ()=>{}; x.y = 1",
+        "const x = ()=>{}; x.y = 1",
         // // AssignmentExpression
         "var x;x = {}",
         "var x;x += 1",
@@ -107,11 +119,11 @@ fn test() {
         "function x(){this.y = 1}; const z = new x()",
         "let x = 1; x = 2 + 3",
         "let x; x = 2 + 3",
-        // // AssignmentPattern
-        // "const {x = ext} = {}",
-        // "const {x: y = ext} = {}",
-        // "const {[ext]: x = ext} = {}",
-        // "const x = ()=>{}, {y = x()} = {}",
+        // AssignmentPattern
+        "const {x = ext} = {}",
+        "const {x: y = ext} = {}",
+        "const {[ext]: x = ext} = {}",
+        "const x = ()=>{}, {y = x()} = {}",
         // // BinaryExpression
         // "const x = 1 + 2",
         // "if (1-1) ext()",
@@ -125,9 +137,9 @@ fn test() {
         "(a=>{const y = a})(ext, ext)",
         "const x = ()=>{}, y = ()=>{}; x(y())",
         // // CatchClause
-        // "try {} catch (error) {}",
-        // "const x = ()=>{}; try {} catch (error) {const x = ext}; x()",
-        // "const x = ext; try {} catch (error) {const x = ()=>{}; x()}",
+        "try {} catch (error) {}",
+        "const x = ()=>{}; try {} catch (error) {const x = ext}; x()",
+        "const x = ext; try {} catch (error) {const x = ()=>{}; x()}",
         // // ClassBody
         // "class x {a(){ext()}}",
         // // ClassBody when called
@@ -284,9 +296,9 @@ fn test() {
         // "class x {a(){}}",
         // "class x {static a(){}}",
         // // NewExpression
-        // "const x = new (function (){this.x = 1})()",
-        // "function x(){this.y = 1}; const z = new x()",
-        // "/*@__PURE__*/ new ext()",
+        "const x = new (function (){this.x = 1})()",
+        "function x(){this.y = 1}; const z = new x()",
+        "/*@__PURE__*/ new ext()",
         // // ObjectExpression
         // "const x = {y: ext}",
         // r#"const x = {["y"]: ext}"#,
@@ -316,12 +328,12 @@ fn test() {
         // "const x = `Literal ${ext}`",
         // r#"const x = ()=>"a"; const y = `Literal ${x()}`"#,
         // // ThisExpression
-        // "const y = this.x",
+        "const y = this.x",
         // // ThisExpression when mutated
-        // "const y = new (function (){this.x = 1})()",
-        // "const y = new (function (){{this.x = 1}})()",
-        // "const y = new (function (){(()=>{this.x = 1})()})()",
-        // "function x(){this.y = 1}; const y = new x()",
+        "const y = new (function (){this.x = 1})()",
+        "const y = new (function (){{this.x = 1}})()",
+        "const y = new (function (){(()=>{this.x = 1})()})()",
+        "function x(){this.y = 1}; const y = new x()",
         // // TryStatement
         // "try {} catch (error) {}",
         // "try {} finally {}",
@@ -353,33 +365,33 @@ fn test() {
     ];
 
     let fail = vec![
-        // // ArrayExpression
-        // "const x = [ext()]",
-        // "const x = [,,ext(),]",
-        // // ArrayPattern
-        // "const [x = ext()] = []",
-        // "const [,x = ext(),] = []",
-        // // ArrowFunctionExpression when called
-        // "(()=>{ext()})()",
-        // "(({a = ext()})=>{})()",
-        // "(a=>{a()})(ext)",
-        // "((...a)=>{a()})(ext)",
-        // "(({a})=>{a()})(ext)",
-        // "(a=>{a.x = 1})(ext)",
-        // "(a=>{const b = a;b.x = 1})(ext)",
-        // "((...a)=>{a.x = 1})(ext)",
-        // "(({a})=>{a.x = 1})(ext)",
-        // // AssignmentExpression
+        // ArrayExpression
+        "const x = [ext()]",
+        "const x = [,,ext(),]",
+        // ArrayPattern
+        "const [x = ext()] = []",
+        "const [,x = ext(),] = []",
+        // ArrowFunctionExpression when called
+        "(()=>{ext()})()",
+        "(({a = ext()})=>{})()",
+        "(a=>{a()})(ext)",
+        "((...a)=>{a()})(ext)",
+        "(({a})=>{a()})(ext)",
+        "(a=>{a.x = 1})(ext)",
+        "(a=>{const b = a;b.x = 1})(ext)",
+        "((...a)=>{a.x = 1})(ext)",
+        "(({a})=>{a.x = 1})(ext)",
+        // AssignmentExpression
         "ext = 1",
         "ext += 1",
         "ext.x = 1",
         "const x = {};x[ext()] = 1",
-        // "this.x = 1",
-        // // AssignmentPattern
-        // "const {x = ext()} = {}",
-        // "const {y: {x = ext()} = {}} = {}",
-        // // AwaitExpression
-        // "const x = async ()=>{await ext()}; x()",
+        "this.x = 1",
+        // AssignmentPattern
+        "const {x = ext()} = {}",
+        "const {y: {x = ext()} = {}} = {}",
+        // AwaitExpression
+        "const x = async ()=>{await ext()}; x()",
         // // BinaryExpression
         // "const x = 1 + ext()",
         // "const x = ext() + 1",
@@ -387,15 +399,16 @@ fn test() {
         // "{ext()}",
         // "var x=()=>{};{var x=ext}x()",
         // "var x=ext;{x(); var x=()=>{}}",
-        // // CallExpression
+        // CallExpression
         "(()=>{})(ext(), 1)",
         "(()=>{})(1, ext())",
-        // // CallExpression when called
+        // CallExpression when called
         "const x = ()=>ext; const y = x(); y()",
-        // // CallExpression when mutated
+        // CallExpression when mutated
         "const x = ()=>ext; const y = x(); y.z = 1",
-        // // CatchClause
-        // "try {} catch (error) {ext()}",
+        // CatchClause
+        "try {} catch (error) {ext()}",
+        // TODO: check global function `ext` call when called `x()` in no strict mode
         // "var x=()=>{}; try {} catch (error) {var x=ext}; x()",
         // // ClassBody
         // "class x {[ext()](){}}",
@@ -568,9 +581,9 @@ fn test() {
         // "const x = {y: ext};delete x.y.z",
         // // MethodDefinition
         // "class x {static [ext()](){}}",
-        // // NewExpression
-        // "const x = new ext()",
-        // "new ext()",
+        // NewExpression
+        "const x = new ext()",
+        "new ext()",
         // // ObjectExpression
         // "const x = {y: ext()}",
         // r#"const x = {["y"]: ext()}"#,
@@ -600,12 +613,12 @@ fn test() {
         // "const x = ()=>{}; const y = x`${ext()}`",
         // // TemplateLiteral
         // "const x = `Literal ${ext()}`",
-        // // ThisExpression when mutated
-        // "this.x = 1",
-        // "(()=>{this.x = 1})()",
-        // "(function(){this.x = 1}())",
-        // "const y = new (function (){(function(){this.x = 1}())})()",
-        // "function x(){this.y = 1}; x()",
+        // ThisExpression when mutated
+        "this.x = 1",
+        "(()=>{this.x = 1})()",
+        "(function(){this.x = 1}())",
+        "const y = new (function (){(function(){this.x = 1}())})()",
+        "function x(){this.y = 1}; x()",
         // // ThrowStatement
         // r#"throw new Error("Hello Error")"#,
         // // TryStatement
