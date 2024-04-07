@@ -1,9 +1,9 @@
 use convert_case::{Case, Casing};
-use proc_macro::TokenStream;
+use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
-    Attribute, Error, Expr, Ident, Lit, LitStr, Meta, Result, Token,
+    Attribute, Error, Ident, Lit, LitStr, Meta, Result, Token,
 };
 
 pub struct LintRuleMeta {
@@ -15,9 +15,11 @@ pub struct LintRuleMeta {
 
 impl Parse for LintRuleMeta {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
+        let attrs = input.call(Attribute::parse_outer)?;
+
         let mut documentation = String::new();
-        for attr in input.call(Attribute::parse_outer)? {
-            if let Some(lit) = parse_attr(["doc"], &attr) {
+        for attr in &attrs {
+            if let Some(lit) = parse_attr(["doc"], attr) {
                 let value = lit.value();
                 let line = value.strip_prefix(' ').unwrap_or(&value);
 
@@ -33,7 +35,7 @@ impl Parse for LintRuleMeta {
         let category = input.parse()?;
 
         // Ignore the rest
-        input.parse::<proc_macro2::TokenStream>()?;
+        input.parse::<TokenStream>()?;
 
         Ok(Self { name: struct_name, category, documentation, used_in_test: false })
     }
@@ -73,19 +75,18 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         }
     };
 
-    TokenStream::from(output)
+    output
 }
 
 fn parse_attr<const LEN: usize>(path: [&'static str; LEN], attr: &Attribute) -> Option<LitStr> {
-    if let Meta::NameValue(name_value) = &attr.meta {
+    if let Meta::NameValue(name_value) = attr.parse_meta().ok()? {
         let path_idents = name_value.path.segments.iter().map(|segment| &segment.ident);
+
         if itertools::equal(path_idents, path) {
-            if let Expr::Lit(expr_lit) = &name_value.value {
-                if let Lit::Str(s) = &expr_lit.lit {
-                    return Some(s.clone());
-                }
+            if let Lit::Str(lit) = name_value.lit {
+                return Some(lit);
             }
         }
     }
-    None
+    unreachable!()
 }

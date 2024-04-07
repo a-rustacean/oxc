@@ -128,11 +128,11 @@ impl NameSpan {
         Self { name, span }
     }
 
-    pub const fn name(&self) -> &CompactStr {
+    pub fn name(&self) -> &CompactStr {
         &self.name
     }
 
-    pub const fn span(&self) -> Span {
+    pub fn span(&self) -> Span {
         self.span
     }
 }
@@ -260,13 +260,6 @@ impl ExportLocalName {
 
     pub fn is_null(&self) -> bool {
         matches!(self, Self::Null)
-    }
-
-    pub const fn name(&self) -> Option<&CompactStr> {
-        match self {
-            Self::Name(name) => Some(name.name()),
-            Self::Default(_) | Self::Null => None,
-        }
     }
 }
 

@@ -1,5 +1,4 @@
 #![allow(clippy::unnecessary_safety_comment)]
-#![allow(unsafe_code)]
 
 //! An Ecma-262 Lexer / Tokenizer
 //! Prior Arts:

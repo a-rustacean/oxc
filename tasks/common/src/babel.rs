@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use oxc_syntax::assumptions::CompilerAssumptions;
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -20,7 +21,7 @@ pub struct BabelOptions {
     #[serde(default)]
     pub allow_undeclared_exports: bool,
     #[serde(default)]
-    pub assumptions: Value,
+    pub assumptions: CompilerAssumptions,
 }
 
 impl BabelOptions {
