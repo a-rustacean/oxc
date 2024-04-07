@@ -31,29 +31,21 @@ impl SourceMap {
     }
 
     /// Convert `SourceMap` to vlq sourcemap string.
-    /// # Errors
-    ///
-    /// The `serde_json` deserialize Error.
+    #[allow(clippy::missing_errors_doc)]
     pub fn from_json_string(value: &str) -> Result<Self> {
         decode(value)
     }
 
     /// Convert the vlq sourcemap string to `SourceMap`.
-    /// # Errors
-    ///
-    /// The `serde_json` serialization Error.
-    pub fn to_json_string(&self) -> Result<String> {
+    pub fn to_json_string(&self) -> String {
         encode(self)
     }
 
     /// Convert `SourceMap` to vlq sourcemap data url.
-    /// # Errors
-    ///
-    /// The `serde_json` serialization Error.
-    pub fn to_data_url(&self) -> Result<String> {
+    pub fn to_data_url(&self) -> String {
         let base_64_str =
-            base64_simd::Base64::STANDARD.encode_to_boxed_str(self.to_json_string()?.as_bytes());
-        Ok(format!("data:application/json;charset=utf-8;base64,{base_64_str}"))
+            base64_simd::Base64::STANDARD.encode_to_boxed_str(self.to_json_string().as_bytes());
+        format!("data:application/json;charset=utf-8;base64,{base_64_str}")
     }
 
     pub fn get_file(&self) -> Option<&str> {

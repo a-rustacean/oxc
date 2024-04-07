@@ -23,6 +23,7 @@ pub struct LineOffsetTable {
 
 #[allow(clippy::struct_field_names)]
 pub struct SourcemapBuilder {
+    enable_sourcemap: bool,
     source_id: u32,
     original_source: Arc<str>,
     last_generated_update: usize,
@@ -37,6 +38,7 @@ pub struct SourcemapBuilder {
 impl Default for SourcemapBuilder {
     fn default() -> Self {
         Self {
+            enable_sourcemap: false,
             source_id: 0,
             original_source: "".into(),
             last_generated_update: 0,
@@ -52,47 +54,44 @@ impl Default for SourcemapBuilder {
 
 impl SourcemapBuilder {
     pub fn with_name_and_source(&mut self, name: &str, source: &str) {
+        self.enable_sourcemap = true;
         self.line_offset_tables = Self::generate_line_offset_tables(source);
         self.source_id = self.sourcemap_builder.set_source_and_content(name, source);
         self.original_source = source.into();
     }
 
-    pub fn into_sourcemap(self) -> oxc_sourcemap::SourceMap {
-        self.sourcemap_builder.into_sourcemap()
+    pub fn into_sourcemap(self) -> Option<oxc_sourcemap::SourceMap> {
+        self.enable_sourcemap.then(|| self.sourcemap_builder.into_sourcemap())
     }
 
     pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
-        debug_assert!(
-            (span.end as usize) <= self.original_source.len(),
-            "violated {}:{} <= {} for {name}",
-            span.start,
-            span.end,
-            self.original_source.len()
-        );
-        let original_name = self.original_source.get(span.start as usize..span.end as usize);
+        // SAFETY: search original string by span.
+        let original_name =
+            unsafe { self.original_source.get_unchecked(span.start as usize..span.end as usize) };
         // The token name should be original name.
         // If it hasn't change, name should be `None` to reduce `SourceMap` size.
-        let token_name =
-            if original_name == Some(name) { None } else { original_name.map(Into::into) };
+        let token_name = if original_name == name { None } else { Some(original_name.into()) };
         self.add_source_mapping(output, span.start, token_name);
     }
 
     pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<Arc<str>>) {
-        if matches!(self.last_position, Some(last_position) if last_position >= position) {
-            return;
+        if self.enable_sourcemap {
+            if matches!(self.last_position, Some(last_position) if last_position >= position) {
+                return;
+            }
+            let (original_line, original_column) = self.search_original_line_and_column(position);
+            self.update_generated_line_and_column(output);
+            let name_id = name.map(|s| self.sourcemap_builder.add_name(&s));
+            self.sourcemap_builder.add_token(
+                self.generated_line,
+                self.generated_column,
+                original_line,
+                original_column,
+                Some(self.source_id),
+                name_id,
+            );
+            self.last_position = Some(position);
         }
-        let (original_line, original_column) = self.search_original_line_and_column(position);
-        self.update_generated_line_and_column(output);
-        let name_id = name.map(|s| self.sourcemap_builder.add_name(&s));
-        self.sourcemap_builder.add_token(
-            self.generated_line,
-            self.generated_column,
-            original_line,
-            original_column,
-            Some(self.source_id),
-            name_id,
-        );
-        self.last_position = Some(position);
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -389,7 +388,7 @@ mod test {
         builder.with_name_and_source("x.js", "ab");
         builder.add_source_mapping_for_name(output, Span::new(0, 1), "a");
         builder.add_source_mapping_for_name(output, Span::new(1, 2), "c");
-        let sm = builder.into_sourcemap();
+        let sm = builder.into_sourcemap().unwrap();
         // The name `a` not change.
         assert_eq!(
             sm.get_source_view_token(0_u32).as_ref().and_then(|token| token.get_name()),

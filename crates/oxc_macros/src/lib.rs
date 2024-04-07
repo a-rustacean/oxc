@@ -1,4 +1,3 @@
-use proc_macro::TokenStream;
 use syn::parse_macro_input;
 
 mod declare_all_lint_rules;
@@ -37,22 +36,25 @@ mod declare_oxc_lint;
 /// }
 /// ```
 #[proc_macro]
-pub fn declare_oxc_lint(input: TokenStream) -> TokenStream {
+pub fn declare_oxc_lint(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let metadata = parse_macro_input!(input as declare_oxc_lint::LintRuleMeta);
-    declare_oxc_lint::declare_oxc_lint(metadata)
+
+    declare_oxc_lint::declare_oxc_lint(metadata).into()
 }
 
 /// Same as `declare_oxc_lint`, but doesn't do imports.
 /// Enables multiple usages in a single file.
 #[proc_macro]
-pub fn declare_oxc_lint_test(input: TokenStream) -> TokenStream {
+pub fn declare_oxc_lint_test(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let mut metadata = parse_macro_input!(input as declare_oxc_lint::LintRuleMeta);
     metadata.used_in_test = true;
-    declare_oxc_lint::declare_oxc_lint(metadata)
+
+    declare_oxc_lint::declare_oxc_lint(metadata).into()
 }
 
 #[proc_macro]
-pub fn declare_all_lint_rules(input: TokenStream) -> TokenStream {
+pub fn declare_all_lint_rules(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let metadata = parse_macro_input!(input as declare_all_lint_rules::AllLintRulesMeta);
-    declare_all_lint_rules::declare_all_lint_rules(metadata)
+
+    declare_all_lint_rules::declare_all_lint_rules(metadata).into()
 }

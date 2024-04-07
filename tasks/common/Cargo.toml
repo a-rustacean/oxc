@@ -13,7 +13,8 @@ test    = false
 doctest = false
 
 [dependencies]
-console = { workspace = true }
+console    = { workspace = true }
+oxc_syntax = { workspace = true, features = ["serialize"] }
 
 project-root = { workspace = true }
 serde        = { workspace = true, features = ["derive"] }

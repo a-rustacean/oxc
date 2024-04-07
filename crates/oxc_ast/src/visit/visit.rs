@@ -24,10 +24,7 @@ pub trait Visit<'a>: Sized {
         // SAFETY:
         // This should be safe as long as `src` is an reference from the allocator.
         // But honestly, I'm not really sure if this is safe.
-        #[allow(unsafe_code)]
-        unsafe {
-            std::mem::transmute(t)
-        }
+        unsafe { std::mem::transmute(t) }
     }
 
     fn visit_program(&mut self, program: &Program<'a>) {
@@ -1102,11 +1099,9 @@ pub mod walk {
 
     pub fn walk_finally_clause<'a, V: Visit<'a>>(visitor: &mut V, clause: &BlockStatement<'a>) {
         let kind = AstKind::FinallyClause(visitor.alloc(clause));
-        visitor.enter_scope(ScopeFlags::empty());
         visitor.enter_node(kind);
-        visitor.visit_statements(&clause.body);
+        visitor.visit_block_statement(clause);
         visitor.leave_node(kind);
-        visitor.leave_scope();
     }
 
     pub fn walk_while_statement<'a, V: Visit<'a>>(visitor: &mut V, stmt: &WhileStatement<'a>) {

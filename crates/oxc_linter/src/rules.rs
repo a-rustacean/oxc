@@ -137,7 +137,6 @@ mod typescript {
     pub mod no_unsafe_declaration_merging;
     pub mod no_var_requires;
     pub mod prefer_as_const;
-    pub mod prefer_for_of;
     pub mod prefer_function_type;
     pub mod prefer_ts_expect_error;
     pub mod triple_slash_reference;
@@ -170,7 +169,6 @@ mod jest {
     pub mod prefer_comparison_matcher;
     pub mod prefer_equality_matcher;
     pub mod prefer_expect_resolves;
-    pub mod prefer_mock_promise_shorthand;
     pub mod prefer_spy_on;
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
@@ -352,12 +350,6 @@ mod nextjs {
     pub mod no_unwanted_polyfillio;
 }
 
-/// <https://github.com/gajus/eslint-plugin-jsdoc>
-mod jsdoc {
-    pub mod check_access;
-    pub mod empty_tags;
-}
-
 mod tree_shaking {
     pub mod no_side_effects_in_initialization;
 }
@@ -470,7 +462,6 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_unsafe_declaration_merging,
     typescript::no_var_requires,
     typescript::prefer_as_const,
-    typescript::prefer_for_of,
     typescript::prefer_function_type,
     typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
@@ -500,7 +491,6 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_comparison_matcher,
     jest::prefer_equality_matcher,
     jest::prefer_expect_resolves,
-    jest::prefer_mock_promise_shorthand,
     jest::prefer_spy_on,
     jest::prefer_strict_equal,
     jest::prefer_to_be,
@@ -676,7 +666,5 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_document_import_in_page,
     nextjs::no_unwanted_polyfillio,
     nextjs::no_before_interactive_script_outside_document,
-    jsdoc::check_access,
-    jsdoc::empty_tags,
     tree_shaking::no_side_effects_in_initialization,
 }
